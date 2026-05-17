@@ -1,0 +1,20 @@
+{
+  "name": "cidecsa-mes-scanner",
+  "version": "3.5.0",
+  "description": "Piloto MES - Sistema de Trazabilidad y Planos de Carpintería",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8080 -o",
+    "dev": "npx http-server -p 8080 --cors"
+  },
+  "keywords": [
+    "QR",
+    "scanner",
+    "production",
+    "carpentry",
+    "traceability",
+    "MES"
+  ],
+  "author": "CIDECSA",
+  "license": "PROPRIETARY"
+}

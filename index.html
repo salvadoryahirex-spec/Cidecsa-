@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piloto MES - Mesa Promods v3.5</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 15px; background-color: #f1f2f6; text-align: center; color: #2f3542; }
+        .card { max-width: 450px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { margin-bottom: 5px; }
+        .sub { color: #57606f; font-size: 14px; margin-bottom: 20px; }
+        #reader { width: 100%; border-radius: 8px; overflow: hidden; background: #000; margin-bottom: 15px; }
+        
+        /* Estilos para el nuevo botón de galería */
+        .gallery-zone { background: #f8f9fa; border: 2px dashed #cfd8dc; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .btn-gallery { display: inline-block; background-color: #1e90ff; color: white; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        #file-input { display: none; } /* Escondemos el input feo por defecto */
+
+        .data-panel { background: #f8f9fa; border-left: 5px solid #2ed573; padding: 15px; text-align: left; margin-top: 15px; border-radius: 4px; display: none; }
+        .btn-plano { display: block; width: 100%; background: #2f3542; color: white; text-align: center; padding: 12px; margin-top: 15px; border-radius: 6px; text-decoration: none; font-weight: bold; box-sizing: border-box; }
+        .btn-plano:hover { background: #57606f; }
+        .badge { background: #ffa502; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🛠️ Piloto MES: Mesa Promods</h2>
+    <div class="sub">Módulo de Trazabilidad y Planos de Carpintería</div>
+    
+    <div id="reader"></div>
+
+    <div class="gallery-zone">
+        <p style="margin-top:0; font-size:14px; font-weight:bold;">¿Tienes una foto del QR?</p>
+        <label for="file-input" class="btn-gallery">📂 Seleccionar desde Galería / Fotos</label>
+        <input type="file" id="file-input" accept="image/*">
+    </div>
+
+    <div id="panel-pieza" class="data-panel">
+        <h3 style="margin-top:0; color:#2ed573;">📋 Datos Técnicos de Producción</h3>
+        <p><b>Mueble Origen:</b> <span id="out-mueble">--</span></p>
+        <p><b>Pieza Identificada:</b> <span id="out-pieza" style="font-weight:bold; color:#d63031;">--</span></p>
+        <p><b>Medidas de Corte:</b> <span id="out-medidas">--</span></p>
+        <p><b>Instrucción de Canteado:</b> <span id="out-canto">--</span></p>
+        <p><b>Estado en Línea:</b> <span class="badge">En Proceso ⏳</span></p>
+        
+        <a id="out-enlace" class="btn-plano" target="_blank">📐 Ver Plano en AutoCAD</a>
+    </div>
+</div>
+
+<script>
+    // Tu base de datos simulada de Excel para la Mesa Promods
+    const excelMesaPromods = {
+        "PROMODS-01-CUB": {
+            mueble: "Mesa Promods (Lote 1)",
+            pieza: "Cubierta Principal",
+            medidas: "1200 mm x 600 mm x 25 mm",
+            canto: "PVC Grueso 2mm por los 4 lados.",
+            linkPlano: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=400"
+        },
+        "PROMODS-01-PAT1": {
+            mueble: "Mesa Promods (Lote 1)",
+            pieza: "Pata Izquierda A",
+            medidas: "725 mm x 450 mm x 18 mm",
+            canto: "PVC Delgado 0.5mm en cantos expuestos.",
+            linkPlano: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=400"
+        },
+        "PROMODS-01-PAT2": {
+            mueble: "Mesa Promods (Lote 1)",
+            pieza: "Pata Derecha B",
+            medidas: "725 mm x 450 mm x 18 mm",
+            canto: "PVC Delgado 0.5mm en cantos expuestos.",
+            linkPlano: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=400"
+        },
+        "PROMODS-01-FAL": {
+            mueble: "Mesa Promods (Lote 1)",
+            pieza: "Faldón de Refuerzo estructural",
+            medidas: "1080 mm x 300 mm x 18 mm",
+            canto: "PVC Delgado 0.5mm solo en la base inferior.",
+            linkPlano: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=400"
+        }
+    };
+
+    // Función unificada que procesa el texto del QR una vez leído
+    function procesarDatosQR(decodedText) {
+        const informacion = excelMesaPromods[decodedText];
+
+        if (!informacion) {
+            alert(`El código detectado [${decodedText}] no pertenece a la Mesa Promods.`);
+            return;
+        }
+
+        // Mostrar el panel de datos
+        document.getElementById('panel-pieza').style.display = "block";
+        
+        // Inyectar la información en la pantalla del celular
+        document.getElementById('out-mueble').innerText = informacion.mueble;
+        document.getElementById('out-pieza').innerText = informacion.pieza;
+        document.getElementById('out-medidas').innerText = informacion.medidas;
+        document.getElementById('out-canto').innerText = informacion.canto;
+        document.getElementById('out-enlace').href = informacion.linkPlano;
+    }
+
+    // 1. Inicializar Escáner de Cámara en vivo
+    let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+    html5QrcodeScanner.render(procesarDatosQR, (err) => {});
+
+    // 2. Lógica para leer imágenes desde la Galería
+    const fileInput = document.getElementById('file-input');
+    const html5QrCode = new Html5Qrcode("reader"); // Reutiliza el contenedor para procesar en segundo plano
+
+    fileInput.addEventListener('change', e => {
+        if (e.target.files.length == 0) {
+            return;
+        }
+
+        const imageFile = e.target.files[0];
+        
+        // Procesar el archivo de imagen seleccionado por el usuario
+        html5QrCode.scanFile(imageFile, true)
+            .then(decodedText => {
+                // Si encuentra un QR en la foto, procesa los datos
+                procesarDatosQR(decodedText);
+            })
+            .catch(err => {
+                // Si la foto está borrosa o no encuentra ningún código QR
+                console.error(err);
+                alert("No se pudo detectar ningún código QR claro en esta imagen. Intenta con otra foto mejor enfocada.");
+            });
+    });
+</script>
+
+</body>
+</html>
